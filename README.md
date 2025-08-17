@@ -1,9 +1,9 @@
 
 # 📖 Character Chat from your books/novels/urls
 
-Welcome to the Character Chat API! This powerful backend service allows you to upload a book (as a PDF or from a URL) and chat with the characters from the story. The API extracts characters, understands the book's content, and uses Google's Gemini to generate in-character, context-aware responses.
+Welcome to the Character Chat API! This powerful  service allows you to upload a book (as a PDF or from a URL) and chat with the characters from the story. The API extracts characters, understands the book's content, and uses Google's Gemini to generate in-character, context-aware responses.
 
-This backend is designed to be the engine for a Flutter application, providing a seamless and interactive experience for users to engage with their favorite literary worlds.
+
 
 ## ✨ Key Features
 
