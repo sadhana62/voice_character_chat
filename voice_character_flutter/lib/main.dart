@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 const String baseUrl = "http://192.168.29.169:8000";
 
@@ -180,6 +181,8 @@ class CharacterListPage extends StatelessWidget {
 
 
 
+
+
 class ChatPage extends StatefulWidget {
   final String character;
   const ChatPage({super.key, required this.character});
@@ -195,13 +198,13 @@ class _ChatPageState extends State<ChatPage> {
   bool isTyping = false;
 
   Future<void> sendMessage() async {
-    String userMessage = _controller.text;
+    String userMessage = _controller.text.trim();
     if (userMessage.isEmpty) return;
 
     setState(() {
       messages.add({"sender": "You", "text": userMessage});
       _controller.clear();
-      isTyping = true; // show typing
+      isTyping = true;
     });
 
     _scrollToBottom();
@@ -210,26 +213,38 @@ class _ChatPageState extends State<ChatPage> {
       var res = await http.post(
         Uri.parse('$baseUrl/chat'),
         headers: {"Content-Type": "application/json"},
-        body: json.encode({"character": widget.character, "message": userMessage}),
+        body: json.encode({
+          "character": widget.character,
+          "message": userMessage,
+        }),
       );
 
       if (res.statusCode == 200) {
         var jsonResp = json.decode(res.body);
         setState(() {
-          messages.add({"sender": widget.character, "text": jsonResp['reply']});
+          messages.add({
+            "sender": widget.character,
+            "text": jsonResp['reply'],
+          });
         });
       } else {
         setState(() {
-          messages.add({"sender": "System", "text": "Error: ${res.statusCode}"});
+          messages.add({
+            "sender": "System",
+            "text": "Error: ${res.statusCode}",
+          });
         });
       }
     } catch (e) {
       setState(() {
-        messages.add({"sender": "System", "text": "Failed to connect: $e"});
+        messages.add({
+          "sender": "System",
+          "text": "Failed to connect: $e",
+        });
       });
     } finally {
       setState(() {
-        isTyping = false; // hide typing
+        isTyping = false;
       });
     }
 
@@ -239,7 +254,9 @@ class _ChatPageState extends State<ChatPage> {
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 300), () {
       if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        _scrollController.jumpTo(
+          _scrollController.position.maxScrollExtent,
+        );
       }
     });
   }
@@ -260,21 +277,26 @@ class _ChatPageState extends State<ChatPage> {
               itemCount: messages.length + (isTyping ? 1 : 0),
               itemBuilder: (context, index) {
                 if (isTyping && index == messages.length) {
-                  // Typing indicator bubble
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        "${widget.character} is typing...",
-                        style: const TextStyle(color: Colors.black54),
-                      ),
+                  return Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 6, horizontal: 50),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          backgroundColor: Colors.deepPurple,
+                          child: Icon(Icons.person, color: Colors.white),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text("${widget.character} is typing..."),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -282,55 +304,111 @@ class _ChatPageState extends State<ChatPage> {
                 var msg = messages[index];
                 bool isUser = msg['sender'] == "You";
 
-                return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isUser ? Colors.deepPurple : Colors.grey.shade200,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft:
-                            isUser ? const Radius.circular(16) : Radius.zero,
-                        bottomRight:
-                            isUser ? Radius.zero : const Radius.circular(16),
+                return Container(
+                  margin: EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 12, // 👈 adds margin outside bubble
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment:
+                        isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    children: [
+                      if (!isUser)
+                        const CircleAvatar(
+                          backgroundColor: Colors.deepPurple,
+                          child: Icon(Icons.person, color: Colors.white),
+                        ),
+                      if (!isUser) const SizedBox(width: 8),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          decoration: BoxDecoration(
+                            gradient: isUser
+                                ? const LinearGradient(
+                                    colors: [Colors.deepPurple, Colors.purple],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: isUser ? null : Colors.grey.shade200,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(16),
+                              topRight: const Radius.circular(16),
+                              bottomLeft: isUser
+                                  ? const Radius.circular(16)
+                                  : Radius.zero,
+                              bottomRight: isUser
+                                  ? Radius.zero
+                                  : const Radius.circular(16),
+                            ),
+                          ),
+                          child: MarkdownBody(
+                            data: msg['text'] ?? "",
+                            styleSheet: MarkdownStyleSheet(
+                              p: TextStyle(
+                                fontSize: 16,
+                                color: isUser
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
+                              strong: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    isUser ? Colors.white : Colors.black,
+                              ),
+                              em: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: isUser
+                                    ? Colors.white70
+                                    : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      msg['text'] ?? "",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isUser ? Colors.white : Colors.black87,
-                      ),
-                    ),
+                      if (isUser) const SizedBox(width: 8),
+                      if (isUser)
+                        const CircleAvatar(
+                          backgroundColor: Colors.deepPurple,
+                          child: Icon(Icons.person, color: Colors.white),
+                        ),
+                    ],
                   ),
                 );
               },
             ),
           ),
+
+          // ========= INPUT BOX =========
           Container(
             padding: const EdgeInsets.all(8),
             color: Colors.white,
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: "Type a message...",
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 12), // 👈 margin outside
+                    child: TextField(
+                      controller: _controller,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => sendMessage(),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        hintText: "Type a message...",
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
                 CircleAvatar(
                   backgroundColor: Colors.deepPurple,
                   child: IconButton(
