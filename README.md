@@ -1,10 +1,5 @@
-Of course! Here is a comprehensive and professional README.md file tailored for your project. It's designed to be clear for any developer, especially a Flutter developer who needs to understand and connect to your API.
 
-Just copy and paste the content below into a new file named `README.md` in your project's root directory.
-
----
-
-# 📖 Character Chat API
+# 📖 Character Chat from your books/novels/urls
 
 Welcome to the Character Chat API! This powerful backend service allows you to upload a book (as a PDF or from a URL) and chat with the characters from the story. The API extracts characters, understands the book's content, and uses Google's Gemini to generate in-character, context-aware responses.
 
